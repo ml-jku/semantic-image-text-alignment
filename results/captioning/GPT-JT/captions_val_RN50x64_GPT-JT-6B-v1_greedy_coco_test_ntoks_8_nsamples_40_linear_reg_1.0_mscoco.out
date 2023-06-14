@@ -1,0 +1,29 @@
+loading annotations into memory...
+0:00:00.099294
+creating index...
+index created!
+Loading and preparing results...     
+DONE (t=0.08s)
+creating index...
+index created!
+CLIP-Score: 0.701003173828125+/-0.07375086279501786
+CLIP-RefScore: 0.7551494605639915+/-0.06052037993925424
+tokenization...
+setting up scorers...
+computing Bleu score...
+{'testlen': 113361, 'reflen': 68454, 'guess': [113361, 108361, 103361, 98361], 'correct': [28861, 1175, 178, 56]}
+ratio: 1.656017179419732
+Bleu_1: 0.255 +- 0.002
+Bleu_2: 0.053 +- 0.001
+Bleu_3: 0.017 +- 0.000
+Bleu_4: 0.007 +- 0.000
+computing Rouge score...
+ROUGE_L: 0.221 +- 0.001
+computing CIDEr score...
+CIDEr: 0.161 +- 0.002
+Bleu_1: 0.25459373153024184
+Bleu_2: 0.052541961810779754
+Bleu_3: 0.016814809687093982
+Bleu_4: 0.007212905463203265
+ROUGE_L: 0.220983636487562
+CIDEr: 0.1607251074563951

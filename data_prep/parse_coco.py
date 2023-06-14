@@ -4,7 +4,6 @@ import os
 from collections import defaultdict
 import pickle
 import tqdm
-from argparse import ArgumentParser
 
 
 def extract_img_and_caps(root, data):
@@ -13,7 +12,9 @@ def extract_img_and_caps(root, data):
 
     for i in tqdm.trange(len(data), desc="Loading COCO data..."):
         d = data[i]
-        filename = f"{root}/{d['filename']}"
+        filename = f"{root}/train2014/{d['filename']}"
+        if not os.path.exists(filename):
+            filename = f"{root}/val2014/{d['filename']}"
 
         image = Image.open(filename)
         imgs[filename] = image.copy()
@@ -23,28 +24,28 @@ def extract_img_and_caps(root, data):
 
 
 def main():
-    annotations = '../dataset/mscoco/dataset_coco.json'
+    annotations = '../annotations/dataset_coco.json'
 
     with open(annotations, 'r') as f:
         data = json.load(f)['images']
-        train_anns = [ann for ann in data if ann['split'] == 'train']
+        train_anns = [ann for ann in data if ann['split'] == 'train' or ann['split'] == 'restval']
         val_anns = [ann for ann in data if ann['split'] == 'val']
         test_anns = [ann for ann in data if ann['split'] == 'test']
 
     os.makedirs(os.path.join('../data', 'mscoco'), exist_ok=True)
 
-    root = './datasets/mscoco'
+    root = '../datasets/mscoco'
     imgs, txts = extract_img_and_caps(root, train_anns)
-    pickle.dump(txts, open(os.path.join('../data', 'coco', f'txts_train.pkl'), 'wb'))
-    pickle.dump(imgs, open(os.path.join('../data', 'coco', f'imgs_train.pkl'), 'wb'))
+    pickle.dump(txts, open(os.path.join('../data', 'mscoco', f'txts_train.pkl'), 'wb'))
+    pickle.dump(imgs, open(os.path.join('../data', 'mscoco', f'imgs_train.pkl'), 'wb'))
 
     imgs, txts = extract_img_and_caps(root, val_anns)
-    pickle.dump(txts, open(os.path.join('../data', 'coco', f'txts_val.pkl'), 'wb'))
-    pickle.dump(imgs, open(os.path.join('../data', 'coco', f'imgs_val.pkl'), 'wb'))
+    pickle.dump(txts, open(os.path.join('../data', 'mscoco', f'txts_val.pkl'), 'wb'))
+    pickle.dump(imgs, open(os.path.join('../data', 'mscoco', f'imgs_val.pkl'), 'wb'))
 
     imgs, txts = extract_img_and_caps(root, test_anns)
-    pickle.dump(txts, open(os.path.join('../data', 'coco', f'txts_test.pkl'), 'wb'))
-    pickle.dump(imgs, open(os.path.join('../data', 'coco', f'imgs_test.pkl'), 'wb'))
+    pickle.dump(txts, open(os.path.join('../data', 'mscoco', f'txts_test.pkl'), 'wb'))
+    pickle.dump(imgs, open(os.path.join('../data', 'mscoco', f'imgs_test.pkl'), 'wb'))
 
     print('Done')
     return 0

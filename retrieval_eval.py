@@ -2,47 +2,29 @@ import os
 import numpy as np
 np.random.seed(101)
 from argparse import ArgumentParser
-from transformers import TransfoXLTokenizer, GPT2Tokenizer, AutoTokenizer, LlamaTokenizer
+from transformers import LlamaTokenizer
 import tqdm
 import torch
 import pickle
 import spacy
 from clip.simple_tokenizer import SimpleTokenizer
-from scipy.stats import wilcoxon
 import clip
 from nltk.stem import SnowballStemmer
 import timm
 from timm.data import resolve_data_config
 from timm.data.transforms_factory import create_transform
+from utils import calc_cosine_sim
 
 
 def create_parser():
     parser = ArgumentParser()
-    parser.add_argument('--datadir', type=str, help='directory where to load the images from', default='data/test_imgs')
+    parser.add_argument('--datadir', type=str, help='directory where to load the images from', default='data/mscoco/')
     parser.add_argument('--k', type=int, default=10, help='How many tokens to retrieve')
-    parser.add_argument('--prompts', action='store_true', default=False,
-                        help='Load mappings trained using ImageNet prompts')
-    parser.add_argument('--mscoco', action='store_true', default=False,
-                        help='Load mappings trained using MSCoco dataset')
-    parser.add_argument('--fraction', default=1., type=float,
-                        help='MSCoco fraction to use')
-    parser.add_argument('--clip', action='store_true', default=False,
-                        help='Evaluate in clip space')
-    parser.add_argument('--lm', type=str, default='EleutherAI/gpt-j-6B',
-                        help='language model to align to')
+    parser.add_argument('--mscoco', action='store_true', default=False, help='Load mappings trained using MSCoco dataset')
+    parser.add_argument('--fraction', default=1, type=float, help='MSCoco fraction to use')
+    parser.add_argument('--clip', action='store_true', default=False, help='Evaluate in clip space')
+    parser.add_argument('--lm', type=str, default='decapoda-research/llama-7b-hf', help='language model to align to')
     return parser.parse_args()
-
-
-def calc_cos_sims(queries, features):
-    normed_queries = queries / np.linalg.norm(queries, ord=2, axis=-1, keepdims=True)
-    normed_features = features / np.linalg.norm(features, ord=2, axis=-1, keepdims=True)
-    return normed_queries @ normed_features.T
-
-
-def find_first_occ(src_tokens, tar_tokens):
-    for i, t in enumerate(src_tokens):
-        if t in tar_tokens:
-            return i + 1
 
 
 def compute_dcg_score(src_tokens, tar_tokens):
@@ -55,10 +37,6 @@ def compute_dcg_score(src_tokens, tar_tokens):
     idcg = np.sum(np.ones((n_rels,)) / np.log2(ideal_ranks + 1))
     return dcg / idcg
 
-
-def softmax(x):
-    z = x - np.max(x, axis=-1).reshape(-1, 1)
-    return np.exp(z)/np.sum(np.exp(z), axis=-1).reshape(-1, 1)
 
 def main():
     options = create_parser()
@@ -75,8 +53,8 @@ def main():
     if options.clip:
         suffix += '_clip'
 
-    images = pickle.load(open(os.path.join('data', 'coco', f'imgs_val.pkl'), 'rb'))
-    txts = pickle.load(open(os.path.join('data', 'coco', f'txts_val.pkl'), 'rb'))
+    images = pickle.load(open(os.path.join(options.datadir, f'imgs_val.pkl'), 'rb'))
+    txts = pickle.load(open(os.path.join(options.datadir, f'txts_val.pkl'), 'rb'))
     keys = list(txts.keys())
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -111,9 +89,7 @@ def main():
         if options.clip:
             tokenizer = SimpleTokenizer()
         else:
-            if 'gpt-j' in lm:
-                tokenizer = AutoTokenizer.from_pretrained(options.lm, cache_dir="/system/user/publicdata/llm")
-            elif 'llama' in lm:
+            if 'llama' in lm:
                 tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf",
                                                            cache_dir="/system/user/publicdata/llm",
                                                            use_fast=False)
@@ -155,7 +131,7 @@ def main():
             else:
                 proj_features = image_features
 
-            sims = calc_cos_sims(proj_features, target_embs)
+            sims = calc_cosine_sim(proj_features, target_embs)
             ranked_sims = np.argsort(sims, axis=-1)[:, ::-1]
 
             stemmed_caps = []

@@ -4,7 +4,7 @@ from timm.data.transforms_factory import create_transform
 from argparse import ArgumentParser
 from transformers import AutoTokenizer
 import numpy as np
-from train_all_models import calc_cosine_sim, orthogonal_procrustes
+from utils import orthogonal_procrustes
 import tqdm
 import os
 import pickle
@@ -41,7 +41,7 @@ def main():
     options = create_parser()
     assert options.fraction <= 1 and options.fraction > 0, "Fraction of training data must be within (0,1]"
 
-    txts_train = pickle.load(open(os.path.join('./data', options.options.dataset, f'txts_train.pkl'), 'rb'))
+    txts_train = pickle.load(open(os.path.join('./data', options.dataset, f'txts_train.pkl'), 'rb'))
     if options.fraction == 1:
         subset_keys = list(txts_train.keys())
     else:
@@ -50,15 +50,15 @@ def main():
 
     print(f"Using subset of {len(subset_keys)} images")
 
-    lm_clean = options.lm.split('/')[-1]
     if 'llama' in options.lm:
         tokenizer = LlamaTokenizer.from_pretrained(options.lm, cache_dir="/system/user/publicdata/llm", use_fast=False)
     else:
         tokenizer = AutoTokenizer.from_pretrained(options.lm, cache_dir="/system/user/publicdata/llm", use_fast=False)
     unk_id = tokenizer.unk_token_id
     tokenized_train = tokenize(txts_train, subset_keys, tokenizer, all_stopwords, unk_id)
+    lm = options.lm.split("/")[-1]
 
-    all_target_embs = np.load(f'./data/{lm_clean}_embs.npz')
+    all_target_embs = np.load(f'./data/{lm}_embs.npz')
     target_mean = all_target_embs.mean(0)
     target_std = all_target_embs.std(0)
     targets = (all_target_embs - target_mean) / target_std
@@ -66,13 +66,13 @@ def main():
     encoders = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14',
                     'ViT-L/14@336px', 'beit_base_patch16_224', 'vit_large_patch16_224_in21k']
 
-    for endoer in encoders:
+    for encoder in encoders:
 
         encoder_clean = encoder.replace('/', '')
         print(f"Model: {encoder}")
         if not os.path.exists(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs.npy'):
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            print("Constructing options.dataset...")
+            print(f"Constructing {options.dataset} dataset...")
 
             if encoder.startswith('beit') or encoder.startswith('vit'):
                 config = resolve_data_config({}, model=encoder_clean)
@@ -84,7 +84,7 @@ def main():
                 model, preprocess = clip.load(encoder)
                 model.cuda().eval()
 
-            images_train = pickle.load(open(os.path.join('./data', options.options.dataset, f'imgs_train.pkl'), 'rb'))
+            images_train = pickle.load(open(os.path.join('./data', options.dataset, f'imgs_train.pkl'), 'rb'))
             image_features = []
             with torch.no_grad():
                 for i in tqdm.trange(0, len(subset_keys), 128):

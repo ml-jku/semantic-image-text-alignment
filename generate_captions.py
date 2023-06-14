@@ -2,7 +2,7 @@ import os
 import numpy as np
 np.random.seed(101)
 from argparse import ArgumentParser
-from transformers import TransfoXLTokenizer, TransfoXLLMHeadModel, GPT2Tokenizer, AutoTokenizer, GPTJForCausalLM,\
+from transformers import AutoTokenizer, GPTJForCausalLM,\
     AutoModelForCausalLM, AutoModelWithLMHead, T5ForConditionalGeneration, LlamaForCausalLM, LlamaTokenizer
 import tqdm
 import torch
@@ -24,13 +24,13 @@ def create_parser():
     parser.add_argument('--l', type=int, default=5, help='How many captions to sample')
     parser.add_argument('--mscoco', action='store_true', default=False, help='Load mappings trained using MSCoco dataset')
     parser.add_argument('--flickr', action='store_true', default=False, help='Load mappings trained using Flickr30k dataset')
-    parser.add_argument('--fraction', default=1., type=float, help='MSCoco fraction to use')
+    parser.add_argument('--fraction', default=1, type=float, help='MSCoco fraction to use')
     parser.add_argument('--lm', type=str, default='decapoda-research/llama-7b-hf', help='language model to align to')
     parser.add_argument('--vis-encoder', type=str, default='ViT-B/16',
                         choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14',
                                  'ViT-L/14@336px', 'beit_base_patch16_224', 'vit_large_patch16_224_in21k'],
                         help='Vision encoder to use')
-    parser.add_argument('--train_method', help='Method that was used to train the semantic mapping')
+    parser.add_argument('--train-method', help='Method that was used to train the semantic mapping')
     parser.add_argument('--decoding', type=str, choices=['greedy', 'sampling', 'topk', 'nucleus'], required=True,
                         help='What decoding strategy to use')
     return parser.parse_args()
@@ -58,7 +58,6 @@ def generate(
     stop_tokens: str = [".", "\n"],
 ):
     model.eval()
-    generated_num = 0
     generated_list = []
     if isinstance(model, T5ForConditionalGeneration):
         stop_token_index = [1]
@@ -85,9 +84,7 @@ def generate(
                     tokens = torch.tensor(tokenizer.encode(prompt))
                     tokens = tokens.unsqueeze(0).to(device)
 
-                if not isinstance(model, TransfoXLLMHeadModel):
-                    generated = model.transformer.wte(tokens)
-                elif isinstance(model, T5ForConditionalGeneration):
+                if isinstance(model, T5ForConditionalGeneration):
                     generated = model.shared(tokens)
                 elif isinstance(model, LlamaForCausalLM):
                     generated = model.model.embed_tokens(tokens)
@@ -142,8 +139,6 @@ def generate(
                     next_token_embed = model.shared(next_token)
                 elif isinstance(model, LlamaForCausalLM):
                     next_token_embed = model.model.embed_tokens(next_token)
-                elif isinstance(model, TransfoXLLMHeadModel):
-                    next_token_embed = model.transformer.word_emb(next_token)
                 else:
                     next_token_embed = model.transformer.wte(next_token)
 
@@ -167,9 +162,6 @@ def generate(
                         # All beams are terminated
                         break
                     terminated = np.full(shape=(generated.shape[0],), fill_value=False, dtype=np.bool8)
-
-            # output_text = tokenizer.decode(tokens.squeeze().cpu().numpy())
-            # generated_list.append(output_text)
 
         if len(generated) > 0:
             # append leftover captions to generated list
@@ -203,16 +195,14 @@ def main():
     if options.train_method:
         suffix += f'_{options.train_method}'
 
-    dataset = "flickr30k" if "flickr" in options.datadir else "coco"
+    dataset = "flickr30k" if "flickr" in options.datadir else "mscoco"
     suffix += f'_{options.decoding}_{dataset}'
     if 'val' in options.datadir:
         set = '_val'
     elif 'test' in options.datadir:
         set = '_test'
-    elif 'train' in options.datadir:
-        set = '_train'
     else:
-        set = '_all'
+        set = '_train'
 
     suffix += set
 
@@ -315,8 +305,6 @@ def main():
 
             if isinstance(transformer, LlamaForCausalLM):
                 prompt_embs = transformer.model.embed_tokens(torch.LongTensor(encoded_prompt).to(device)).to(device)
-            elif isinstance(transformer, TransfoXLLMHeadModel):
-                prompt_embs = transformer.transformer.word_emb(torch.LongTensor(encoded_prompt).to(device))
             else:
                 prompt_embs = transformer.transformer.wte(torch.LongTensor(encoded_prompt).to(device))
 
@@ -344,17 +332,10 @@ def main():
     orig_image_features = image_features.copy()
     image_features = (image_features - image_features.mean(0)) / image_features.std(0)
 
-    ext = f'_zeroshot_{options.iter}' if options.zeroshot else ''
-    if options.prompts:
-        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_prompted.npy'))
-    elif options.imagenet:
-        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_imagenet.npy'))
-    elif options.mscoco:
-        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_mscoco_{options.fraction}{ext}.npy'))
+    if options.mscoco:
+        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_mscoco_{options.fraction}.npy'))
     elif options.flickr:
-        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_flickr30k_{options.fraction}{ext}.npy'))
-    elif options.full_vocab:
-        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_full_vocab_prompted.npy'))
+        proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}_flickr30k_{options.fraction}.npy'))
     else:
         proj_mat = np.load(os.path.join('./models', f'{lm}_{encoder_clean}_{options.train_method}.npy'))
 
@@ -405,8 +386,6 @@ def main():
         with torch.no_grad():
             if isinstance(transformer, LlamaForCausalLM):
                 prompt_prefix = transformer.model.embed_tokens(torch.LongTensor(permuted_prompts).to(device)).to(device)
-            elif isinstance(transformer, TransfoXLLMHeadModel):
-                prompt_prefix = transformer.transformer.word_emb(torch.LongTensor(permuted_prompts).to(device))
             elif hasattr(transformer, 'transformer') and not "GPT-JT" in options.lm:
                 prompt_prefix = transformer.transformer.wte(torch.LongTensor(permuted_prompts).to(device))
 

@@ -20,7 +20,7 @@ from variables import imagenet_templates
 
 def create_parser():
     parser = ArgumentParser()
-    parser.add_argument('--lm', required=True, help='Use average ImageNet prompts for tokens to train mapping')
+    parser.add_argument('--lm', default='llama-7b-hf', help='Language Model to extract embeddings for')
     return parser.parse_args()
 
 
@@ -54,11 +54,7 @@ def main():
     options = create_parser()
     lm = options.lm
 
-    if lm == 'transfo-xl-wt103':
-        transformer = TransfoXLModel.from_pretrained(lm)
-        tokenizer = TransfoXLTokenizer.from_pretrained(lm)
-        n_tokens = transformer.word_emb.n_token
-    elif 'gpt-j' in lm:
+    if 'gpt-j' in lm:
         transformer = GPTJModel.from_pretrained(
             "EleutherAI/gpt-j-6B", torch_dtype=torch.float32, low_cpu_mem_usage=True,
             cache_dir="/system/user/publicdata/llm"
@@ -97,6 +93,23 @@ def main():
         n_tokens = tokenizer.vocab_size
     else:
         raise NotImplementedError(f"{lm} - Language model not supported!!!!")
+
+    if not os.path.exists(f'../data/{lm}_embs.npz'):
+        print("Dumping LM vocab...")
+        with torch.no_grad():
+            if lm == 'transfo-xl-wt103':
+                all_embs = transformer.word_emb(torch.arange(n_tokens)).cpu().numpy()
+            elif 'llama' in lm or 'alpaca' in lm:
+                all_embs = transformer.model.embed_tokens(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
+            elif 'gpt' in lm:
+                all_embs = transformer.wte(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
+            elif 't5' in lm:
+                all_embs = transformer.shared(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
+            else:
+                all_embs = transformer.transformer.wte(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
+
+            # dump transformer embeddings
+            np.save(open(f'../data/{lm}_embs.npz', 'wb'), all_embs.squeeze())
 
     clip_models = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
 
@@ -142,23 +155,6 @@ def main():
                 clip_embs.append(vecs)
             clip_embs = np.array(clip_embs)
             np.save(open(f'../data/{encoder}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
-
-    if not os.path.exists(f'../data/{lm}_embs.npz'):
-        print("Dumping LM vocab...")
-        with torch.no_grad():
-            if lm == 'transfo-xl-wt103':
-                all_embs = transformer.word_emb(torch.arange(n_tokens)).cpu().numpy()
-            elif 'llama' in lm or 'alpaca' in lm:
-                all_embs = transformer.model.embed_tokens(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
-            elif 'gpt' in lm:
-                all_embs = transformer.wte(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
-            elif 't5' in lm:
-                all_embs = transformer.shared(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
-            else:
-                all_embs = transformer.transformer.wte(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
-
-            # dump transformer embeddings
-            np.save(open(f'../data/{lm}_embs.npz', 'wb'), all_embs.squeeze())
 
 
 if __name__ == '__main__':

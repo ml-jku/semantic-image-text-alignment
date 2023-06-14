@@ -1,17 +1,16 @@
 from argparse import ArgumentParser
 import numpy as np
 np.random.seed(101)
-import matplotlib.pyplot as plt
 from sklearn.linear_model import Ridge, LinearRegression
 import os
 import tqdm
 from sklearn.model_selection import KFold
-from numpy.linalg import svd
+from utils import orthogonal_procrustes, calc_cosine_sim
 
 
 def create_parser():
     parser = ArgumentParser()
-    parser.add_argument('--lm', required=True, help='Language model embeddings to take')
+    parser.add_argument('--lm', default='llama-7b-hf', help='Language model embeddings to take')
     return parser.parse_args()
 
 
@@ -30,19 +29,6 @@ def accuracy_at_5(sims):
             counts += 1
     acc = counts / len(sims)
     return acc
-
-
-def calc_cosine_sim(src, proj, target):
-    src = src @ proj
-    src = src / np.linalg.norm(src, ord=2, axis=-1, keepdims=True)
-    target = target / np.linalg.norm(target, ord=2, axis=-1, keepdims=True)
-    return src @ target.T
-
-
-def orthogonal_procrustes(A, B):
-    u, w, vt = svd(B.T.dot(A).T, full_matrices=False)
-    R = u.dot(vt)
-    return R
 
 
 def perform_cv(src_embs, target_embs, train_method, eval_metric):
@@ -80,14 +66,14 @@ def perform_cv(src_embs, target_embs, train_method, eval_metric):
             raise NotImplementedError(f'{train_method} - Training method not supported!!')
 
         # evaluate current fold
-        train_cosine_sims = calc_cosine_sim(train_src, proj_mat, train_tar)
+        train_cosine_sims = calc_cosine_sim(train_src, train_tar, proj_mat)
         train_acc1 = eval_metric(train_cosine_sims)
         train_accs1.append(train_acc1)
 
         test_src = src_embs[test_inds]
         test_tar = target_embs[test_inds]
 
-        test_cosine_sims = calc_cosine_sim(test_src, proj_mat, test_tar)
+        test_cosine_sims = calc_cosine_sim(test_src, test_tar, proj_mat)
         test_acc1 = eval_metric(test_cosine_sims)
         test_accs1.append(test_acc1)
 
@@ -117,9 +103,9 @@ def main():
 
 
     lm = options.lm
-    for model in clip_models:
+    for encoder in clip_models:
 
-        clip_embs = np.load(f'./data/{model}_{lm}_prompt_embs.npz')
+        clip_embs = np.load(f'./data/{encoder}_{lm}_prompt_embs.npz')
         target_embs = np.load(f'./data/{lm}_embs.npz')
 
         # center and scale data
@@ -133,7 +119,7 @@ def main():
     
         for train_method in ['linear_reg', 'ridge_reg', 'procrustes', 'robust_procrustes']:
 
-            if not os.path.exists(os.path.join('./models', f'{lm}_{model}_{train_method}.npy')):
+            if not os.path.exists(os.path.join('./models', f'{lm}_{encoder}_{train_method}.npy')):
                 # By default perform the token classification task to evaluate alignment
                 perform_cv(clip_embs, target_embs, train_method, accuracy_at_1)
 
@@ -160,9 +146,9 @@ def main():
                     model.fit(clip_embs, target_embs)
                     proj_mat = model.coef_.T
 
-                np.save(os.path.join('./models', f'{lm}_{model}_{train_method}'), proj_mat)
+                np.save(os.path.join('./models', f'{lm}_{encoder}_{train_method}'), proj_mat)
             else:
-               print(f"{lm}_{model}_{train_method} - Mapping already exists!!!")
+               print(f"{lm}_{encoder}_{train_method} - Mapping already exists!!!")
 
 if __name__ == '__main__':
     main()
