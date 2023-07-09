@@ -96,7 +96,7 @@ def get_label_for_embs(embs, targets, batch_size=1024):
 
 def main():
     options = create_parser()
-    os.makedirs('./models', exist_ok=True)
+    os.makedirs('../models', exist_ok=True)
 
     clip_models = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B32', 'ViT-B16', 'ViT-L14',
                     'ViT-L14@336px']
@@ -119,7 +119,7 @@ def main():
     
         for train_method in ['linear_reg', 'ridge_reg', 'procrustes', 'robust_procrustes']:
 
-            if not os.path.exists(os.path.join('./models', f'{lm}_{encoder}_{train_method}.npy')):
+            if not os.path.exists(os.path.join('../models', f'{lm}_{encoder}_{train_method}.npy')):
                 # By default perform the token classification task to evaluate alignment
                 perform_cv(clip_embs, target_embs, train_method, accuracy_at_1)
 
@@ -146,7 +146,7 @@ def main():
                     model.fit(clip_embs, target_embs)
                     proj_mat = model.coef_.T
 
-                np.save(os.path.join('./models', f'{lm}_{encoder}_{train_method}'), proj_mat)
+                np.save(os.path.join('../models', f'{lm}_{encoder}_{train_method}'), proj_mat)
             else:
                print(f"{lm}_{encoder}_{train_method} - Mapping already exists!!!")
 

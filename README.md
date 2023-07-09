@@ -15,7 +15,7 @@ Sepp Hochreiter<sup>1 2 3</sup>
 **[SITTA: A semantic Image-Text Alignment for Image Captioning]()** is a lightweight mapping from image to text domain that enables conditioning pretrained Language Models on visual input.
 See below some examples for captions created with SITTA for sample images of the MS-COCO validation set.
 
-![Captions](samples/sample_captions.png)
+![Captions](assets/samples/sample_captions.png)
 
 ---
 

@@ -1,10 +1,6 @@
 from transformers import \
-    TransfoXLTokenizer, \
-    TransfoXLModel, \
     GPTJModel, \
     AutoTokenizer, \
-    PreTrainedTokenizerFast, \
-    AutoModelForCausalLM, \
     AutoModelWithLMHead, LlamaForCausalLM, LlamaTokenizer, AutoModelForCausalLM
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer
@@ -14,7 +10,7 @@ import torch
 import os
 import tqdm
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 from variables import imagenet_templates
 
 
