@@ -90,7 +90,7 @@ def main():
     else:
         raise NotImplementedError(f"{lm} - Language model not supported!!!!")
 
-    if not os.path.exists(f'../data/{lm}_embs.npz'):
+    if not os.path.exists(f'data/{lm}_embs.npz'):
         print("Dumping LM vocab...")
         with torch.no_grad():
             if lm == 'transfo-xl-wt103':
@@ -105,7 +105,7 @@ def main():
                 all_embs = transformer.transformer.wte(torch.arange(n_tokens).unsqueeze(-1)).cpu().numpy()
 
             # dump transformer embeddings
-            np.save(open(f'../data/{lm}_embs.npz', 'wb'), all_embs.squeeze())
+            np.save(open(f'data/{lm}_embs.npz', 'wb'), all_embs.squeeze())
 
     clip_models = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
 
@@ -120,14 +120,14 @@ def main():
         print("Vocab size:", clip_vocab_size)
         clip_tokenizer = SimpleTokenizer()
 
-        if not os.path.exists('../data/clip_vocab.npy'):
+        if not os.path.exists('data/clip_vocab.npy'):
             print("Dumping vocab...")
             clip_vocab = get_vocab(clip_tokenizer, clip_vocab_size)
-            np.save('../data/clip_vocab', clip_vocab)
+            np.save('data/clip_vocab', clip_vocab)
         else:
-            clip_vocab = np.load('../data/clip_vocab.npy')
+            clip_vocab = np.load('data/clip_vocab.npy')
 
-        if not os.path.exists(f'../data/{encoder}_{lm}_prompt_embs.npz'):
+        if not os.path.exists(f'data/{encoder}_{lm}_prompt_embs.npz'):
             print("Dumping prompted LM tokens in CLIP space...")
             clip_embs = []
             transformer_vocab = get_vocab(tokenizer, tokenizer.vocab_size)
@@ -138,9 +138,9 @@ def main():
                     vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
                 clip_embs.append(vecs)
             clip_embs = np.array(clip_embs)
-            np.save(open(f'../data/{encoder}_{lm}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
+            np.save(open(f'data/{encoder}_{lm}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
 
-        if not os.path.exists(f'../data/{encoder}_prompt_embs.npz'):
+        if not os.path.exists(f'data/{encoder}_prompt_embs.npz'):
             print("Dumping prompted embeddings...")
             clip_embs = []
             for tok in tqdm.tqdm(clip_vocab):
@@ -150,7 +150,7 @@ def main():
                     vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
                 clip_embs.append(vecs)
             clip_embs = np.array(clip_embs)
-            np.save(open(f'../data/{encoder}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
+            np.save(open(f'data/{encoder}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
 
 
 if __name__ == '__main__':

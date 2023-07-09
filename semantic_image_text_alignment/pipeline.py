@@ -24,7 +24,7 @@ class SITTA(Pipeline):
         self.vis_encoder.eval()
         self.vis_encoder = self.vis_encoder.to(self.device)
         self.clip_tokenizer = SimpleTokenizer()
-        self.projection = np.load("../models/llama-7b-hf_RN50x64_linear_reg_mscoco_1.0.npy")
+        self.projection = np.load("models/llama-7b-hf_RN50x64_linear_reg_mscoco_1.0.npy")
         self.targets = np.load("data/llama-7b-hf_embs.npz")
         # Hardcode stds for MS-COCO datasets
         self.coco_mean, self.coco_std = np.load("data/coco_stats.npy")

@@ -214,7 +214,7 @@ def main():
         raise NotImplementedError(f"Not able to load from {options.datadir}")
 
     keys = list(images.keys())
-    os.makedirs('../assets/results', exist_ok=True)
+    os.makedirs('assets/results', exist_ok=True)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -333,11 +333,11 @@ def main():
     image_features = (image_features - image_features.mean(0)) / image_features.std(0)
 
     if options.mscoco:
-        proj_mat = np.load(os.path.join('../models', f'{lm}_{encoder_clean}_{options.train_method}_mscoco_{options.fraction}.npy'))
+        proj_mat = np.load(os.path.join('models', f'{lm}_{encoder_clean}_{options.train_method}_mscoco_{options.fraction}.npy'))
     elif options.flickr:
-        proj_mat = np.load(os.path.join('../models', f'{lm}_{encoder_clean}_{options.train_method}_flickr30k_{options.fraction}.npy'))
+        proj_mat = np.load(os.path.join('models', f'{lm}_{encoder_clean}_{options.train_method}_flickr30k_{options.fraction}.npy'))
     else:
-        proj_mat = np.load(os.path.join('../models', f'{lm}_{encoder_clean}_{options.train_method}.npy'))
+        proj_mat = np.load(os.path.join('models', f'{lm}_{encoder_clean}_{options.train_method}.npy'))
 
     proj_features = image_features @ proj_mat
 

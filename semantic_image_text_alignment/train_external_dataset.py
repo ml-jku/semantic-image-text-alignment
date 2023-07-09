@@ -125,7 +125,7 @@ def main():
 
         for train_method in ['linear_reg', 'ridge_reg', 'procrustes', 'robust_procrustes']:
 
-            if not os.path.exists(os.path.join('../models', f'{lm}_{encoder_clean}_{train_method}_{options.dataset}_{options.fraction}.npy')):
+            if not os.path.exists(os.path.join('models', f'{lm}_{encoder_clean}_{train_method}_{options.dataset}_{options.fraction}.npy')):
 
                 # fit linear model
                 if train_method == 'procrustes':
@@ -160,7 +160,7 @@ def main():
                     raise NotImplementedError(f'{train_method} - Training method not supported!!')
 
                 print(f"Elapsed time: {end - start}")
-                np.save(os.path.join('../models', f'{lm}_{encoder_clean}_{train_method}_{options.dataset}_{options.fraction}'), proj_mat)
+                np.save(os.path.join('models', f'{lm}_{encoder_clean}_{train_method}_{options.dataset}_{options.fraction}'), proj_mat)
 
 
 if __name__ == '__main__':

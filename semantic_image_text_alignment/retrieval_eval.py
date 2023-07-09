@@ -122,9 +122,9 @@ def main():
             if not options.clip:
                 # load projection matrix and target embs
                 if options.mscoco:
-                    proj_mat = np.load(os.path.join('../models', f'{lm}_{encoder_clean}_{train_method}_mscoco_{options.fraction}.npy'))
+                    proj_mat = np.load(os.path.join('models', f'{lm}_{encoder_clean}_{train_method}_mscoco_{options.fraction}.npy'))
                 else:
-                    proj_mat = np.load(os.path.join('../models', f'{lm}_{encoder_clean}_{train_method}.npy'))
+                    proj_mat = np.load(os.path.join('models', f'{lm}_{encoder_clean}_{train_method}.npy'))
 
                 image_features = (image_features - image_features.mean(0)) / image_features.std(0)
                 proj_features = image_features @ proj_mat
