@@ -214,7 +214,7 @@ def main():
         raise NotImplementedError(f"Not able to load from {options.datadir}")
 
     keys = list(images.keys())
-    os.makedirs('assets/results', exist_ok=True)
+    os.makedirs('results', exist_ok=True)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -428,9 +428,9 @@ def main():
     print(f"CLIP Score: {np.mean(clip_sc)}/{np.std(clip_sc)}")
     if options.avalon:
         env = options.datadir.split('/')[-1].split('.')[0].split('_')[-1]
-        json.dump(ann_file, open(f'./results/captions_{env}_{encoder_clean}_{lm}_{suffix}.json', 'w'))
+        json.dump(ann_file, open(f'results/captions_{env}_{encoder_clean}_{lm}_{suffix}.json', 'w'))
     else:
-        json.dump(ann_file, open(f'./results/captions_val_{encoder_clean}_{lm}_{suffix}.json', 'w'))
+        json.dump(ann_file, open(f'results/captions_val_{encoder_clean}_{lm}_{suffix}.json', 'w'))
 
 
 if __name__ == '__main__':

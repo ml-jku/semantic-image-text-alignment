@@ -9,9 +9,7 @@ import numpy as np
 import torch
 import os
 import tqdm
-import sys
-sys.path.append('../..')
-from variables import imagenet_templates
+from semantic_image_text_alignment.variables import imagenet_templates
 
 
 def create_parser():
@@ -121,7 +119,7 @@ def main():
         clip_tokenizer = SimpleTokenizer()
 
         if not os.path.exists('data/clip_vocab.npy'):
-            print("Dumping vocab...")
+            print("Dumping CLIP vocab...")
             clip_vocab = get_vocab(clip_tokenizer, clip_vocab_size)
             np.save('data/clip_vocab', clip_vocab)
         else:
