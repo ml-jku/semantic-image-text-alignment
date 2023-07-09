@@ -12,6 +12,7 @@ from argparse import ArgumentParser
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--path', type=str, required=True, help="Path to image")
+    parser.add_argument('--gpu-idx', type=int, required=True, help="Index of GPU to use")
     return parser.parse_args()
 
 
@@ -153,7 +154,7 @@ def main():
     tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf", cache_dir="/system/user/publicdata/llm")
     model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", cache_dir="/system/user/publicdata/llm")
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    device = torch.device(device, index=0)
+    device = torch.device(device, index=options.index)
     sitta = pipeline("sitta-image-to-text", model=model, tokenizer=tokenizer, device=device)
     test_sample = Image.open(options.path)
     generated_cap = sitta(test_sample)
