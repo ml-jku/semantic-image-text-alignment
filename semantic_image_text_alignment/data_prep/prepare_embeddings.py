@@ -15,6 +15,7 @@ from semantic_image_text_alignment.variables import imagenet_templates
 def create_parser():
     parser = ArgumentParser()
     parser.add_argument('--lm', default='llama-7b-hf', help='Language Model to extract embeddings for')
+    parser.add_argument('--lm-only', action='store_true', help='Only dump LM embeddings')
     return parser.parse_args()
 
 
@@ -105,50 +106,50 @@ def main():
             # dump transformer embeddings
             np.save(open(f'data/{lm}_embs.npz', 'wb'), all_embs.squeeze())
 
-    clip_models = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
+    if not options.lm_only:
+        clip_models = ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
+        for encoder in clip_models:
 
-    for encoder in clip_models:
+            model, preprocess = clip.load(encoder)
+            encoder = encoder.replace("/", "")
 
-        model, preprocess = clip.load(encoder)
-        encoder = encoder.replace("/", "")
+            model.cuda().eval()
+            clip_vocab_size = model.vocab_size
+            print("Model parameters:", f"{np.sum([int(np.prod(p.shape)) for p in model.parameters()]):,}")
+            print("Vocab size:", clip_vocab_size)
+            clip_tokenizer = SimpleTokenizer()
 
-        model.cuda().eval()
-        clip_vocab_size = model.vocab_size
-        print("Model parameters:", f"{np.sum([int(np.prod(p.shape)) for p in model.parameters()]):,}")
-        print("Vocab size:", clip_vocab_size)
-        clip_tokenizer = SimpleTokenizer()
+            if not os.path.exists('data/clip_vocab.npy'):
+                print("Dumping CLIP vocab...")
+                clip_vocab = get_vocab(clip_tokenizer, clip_vocab_size)
+                np.save('data/clip_vocab', clip_vocab)
+            else:
+                clip_vocab = np.load('data/clip_vocab.npy')
 
-        if not os.path.exists('data/clip_vocab.npy'):
-            print("Dumping CLIP vocab...")
-            clip_vocab = get_vocab(clip_tokenizer, clip_vocab_size)
-            np.save('data/clip_vocab', clip_vocab)
-        else:
-            clip_vocab = np.load('data/clip_vocab.npy')
+            if not os.path.exists(f'data/{encoder}_{lm}_prompt_embs.npz'):
+                print("Dumping prompted LM tokens in CLIP space...")
+                clip_embs = []
+                transformer_vocab = get_vocab(tokenizer, tokenizer.vocab_size)
+                for tok in tqdm.tqdm(transformer_vocab):
+                    prompted = [p.format(tok) for p in imagenet_templates]
+                    tokenized = clip.tokenize(prompted, truncate=True).to(device)
+                    with torch.no_grad():
+                        vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
+                    clip_embs.append(vecs)
+                clip_embs = np.array(clip_embs)
+                np.save(open(f'data/{encoder}_{lm}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
 
-        if not os.path.exists(f'data/{encoder}_{lm}_prompt_embs.npz'):
-            print("Dumping prompted LM tokens in CLIP space...")
-            clip_embs = []
-            transformer_vocab = get_vocab(tokenizer, tokenizer.vocab_size)
-            for tok in tqdm.tqdm(transformer_vocab):
-                prompted = [p.format(tok) for p in imagenet_templates]
-                tokenized = clip.tokenize(prompted, truncate=True).to(device)
-                with torch.no_grad():
-                    vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
-                clip_embs.append(vecs)
-            clip_embs = np.array(clip_embs)
-            np.save(open(f'data/{encoder}_{lm}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
-
-        if not os.path.exists(f'data/{encoder}_prompt_embs.npz'):
-            print("Dumping prompted embeddings...")
-            clip_embs = []
-            for tok in tqdm.tqdm(clip_vocab):
-                prompted = [p.format(tok) for p in imagenet_templates]
-                tokenized = clip.tokenize(prompted).to(device)
-                with torch.no_grad():
-                    vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
-                clip_embs.append(vecs)
-            clip_embs = np.array(clip_embs)
-            np.save(open(f'data/{encoder}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
+            if not os.path.exists(f'data/{encoder}_prompt_embs.npz'):
+                print("Dumping prompted embeddings...")
+                clip_embs = []
+                for tok in tqdm.tqdm(clip_vocab):
+                    prompted = [p.format(tok) for p in imagenet_templates]
+                    tokenized = clip.tokenize(prompted).to(device)
+                    with torch.no_grad():
+                        vecs = model.encode_text(tokenized).cpu().mean(0).numpy()
+                    clip_embs.append(vecs)
+                clip_embs = np.array(clip_embs)
+                np.save(open(f'data/{encoder}_prompt_embs.npz', 'wb'), clip_embs.squeeze())
 
 
 if __name__ == '__main__':

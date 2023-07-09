@@ -1,8 +1,7 @@
-from transformers import Pipeline, CLIPTokenizer, LlamaForCausalLM, LlamaTokenizer
+from transformers import Pipeline, LlamaForCausalLM, LlamaTokenizer, pipeline
 import clip
 from clip.simple_tokenizer import SimpleTokenizer
 from transformers.pipelines import PIPELINE_REGISTRY
-from transformers import pipeline
 import numpy as np
 import torch
 from PIL import Image
