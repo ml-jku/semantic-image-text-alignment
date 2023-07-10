@@ -49,6 +49,8 @@ Then, you can use SITTA for image captioning within a few lines of code:
     test_img = Image.open("test_imgs/COCO_val2014_000000334321.jpg")
     sitta(test_sample)
 
+This will yield the following output:
+
     > 'a white dog sitting on a bench with people sitting around it.'
   
 By default SITTA uses the semantic mapping trained via least-squares on MS-COCO data and the RN50x64 CLIP encoder provided [here](https://github.com/openai/CLIP).
@@ -58,7 +60,8 @@ We will add support for the other language models used in our paper in the futur
 
 ## Reproducing Results of our paper
 
-First, download the MS-COCO data and the Flickr30k data and store them in ```data/coco```, and data ```flickr30k```, respectively.
+First, download the MS-COCO data and the Flickr30k data and store them in ```data/coco```, and ```data/flickr30k```, respectively.
+You can download the MS-COCO data by
 
     cd datasets
     mkdir mscoco && cd mscoco
@@ -69,7 +72,7 @@ First, download the MS-COCO data and the Flickr30k data and store them in ```dat
     cd ../..
     
 Also, apply for access to the [Flickr30k dataset](https://shannon.cs.illinois.edu/DenotationGraph/) and save the images to ```./datasets/flickr30k```.
-Further, you will need to download the train/val/test set annotations for both datasets [here](https://cs.stanford.edu/people/karpathy/deepimagesent/).
+Further, you will need to download the train/val/test set annotations for both datasets [here](https://cs.stanford.edu/people/karpathy/deepimagesent/) and save them to the ```annotations``` directory.
 Parse both datasets by
 
     python semantic_image_text_alignment/data_prep/parse_coco.py
@@ -108,9 +111,9 @@ Finally, you can generate captions for the MS-COCO datasets on the respective te
 
     python semantic_image_text_alignment/generate_captions.py --k 8 --l 40 --mscoco --vis-encoder RN50x64 --train-method linear_reg --decoding greedy    
 
-For generating captions for the Flickr30k datasets, simply set ```--datadir data/flickr30/imgs_test.pkl``` and ```--flickr```.
+For generating captions for the Flickr30k datasets, simply set ```--datadir data/flickr30k/imgs_test.pkl``` and ```--flickr```.
 The hyperparameters ```k``` and ```l``` denote the number of tokens provided in the prompt, and the number of random permutations, respectively.
-Currently, generation supports ```greedy```, ```sampling```, ```nucleus```, and ```topk```.
+Currently, decoding supports ```greedy```, ```sampling```, ```nucleus```, and ```topk```.
 In case you only have access to small GPUs (VRAM < 48GB) consider using 8-bit quantization by setting ```load_in_8bit=True``` while loading the model from the huggingface hub.
 
 ## Pretrained Mappings
