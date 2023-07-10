@@ -69,9 +69,9 @@ First, download the MS-COCO data and the Flickr30k data and store them in ```dat
     cd ../..
     
 Also, apply for access to the [Flickr30k dataset](https://shannon.cs.illinois.edu/DenotationGraph/) and save the images to ```./datasets/flickr30k```.
+Further, you will need to download the train/val/test set annotations for both datasets [here](https://cs.stanford.edu/people/karpathy/deepimagesent/).
 Parse both datasets by
 
-    cd data_prep
     python semantic_image_text_alignment/data_prep/parse_coco.py
     python semantic_image_text_alignment/data_prep/parse_flickr30k.py
 
@@ -92,9 +92,10 @@ Before running the computation for the *external datasets* method, you will need
 This will download and install the english spacy pipeline used for stop-word removal.
 Then execute
 
-    python semantic_image_text_alignment/train_external_dataset.py
+    python semantic_image_text_alignment/train_external_dataset.py --dataset mscoco
     
-By default the above mappings will be computed for Llama, but you can specify other language models via the ```--lm``` command line argument.
+The ```--dataset``` arguments can be set to either ```mscoco``` or ```flickr30k```.
+By default the mappings will be computed for Llama, but you can specify other language models via the ```--lm``` command line argument.
 Further you can specify the fraction of the MS-COCO dataset to be used for the computation of the mapping using the ```--fraction``` command line argument.
 Currently our code supports ```Llama, T5-v1_1, FLAN-T5, GPT-J, GPT-JT```.
 If you want to create mappings for other language models, simply look up the respective huggingface identifier and add it to the code.

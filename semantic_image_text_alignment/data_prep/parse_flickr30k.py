@@ -23,11 +23,11 @@ def extract_img_and_caps(root, data):
 
 
 def main():
-    split_annotations = 'annotations/dataset_flickr30k.json'
+    split_annotations = 'dataset_flickr30k.json'
 
     with open(os.path.join('annotations', split_annotations), 'r') as f:
         split_data = json.load(f)
-        data = [{'caption': sent['raw'], 'image_id': img['filename'].split('.')[0]} for img in split_data['images'] for sent in img['sentences']]
+        data = [{'caption': sent['raw'], 'image_id': img['filename'].split('.')[0], 'split': img['split']} for img in split_data['images'] for sent in img['sentences']]
         train_anns = [ann for ann in data if ann['split'] == 'train']
         val_anns = [ann for ann in data if ann['split'] == 'val']
         test_anns = [ann for ann in data if ann['split'] == 'test']

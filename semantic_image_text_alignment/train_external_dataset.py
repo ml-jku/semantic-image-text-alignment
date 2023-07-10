@@ -70,7 +70,7 @@ def main():
 
         encoder_clean = encoder.replace('/', '')
         print(f"Model: {encoder}")
-        if not os.path.exists(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs.npy'):
+        if not os.path.exists(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs.npy'):
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             print(f"Constructing {options.dataset} dataset...")
 
@@ -111,13 +111,13 @@ def main():
             src_embs = np.array(src_embs, dtype=np.float32).squeeze()
             tar_embs = np.array(tar_embs)
             train_cls = np.concatenate(train_cls)
-            np.save(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs', src_embs)
-            np.save(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_targets', tar_embs)
-            np.save(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_train_cls', train_cls)
+            np.save(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs', src_embs)
+            np.save(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_targets', tar_embs)
+            np.save(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_train_cls', train_cls)
         else:
-            src_embs = np.load(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs.npy')
-            tar_embs = np.load(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_targets.npy')
-            train_cls = np.load(f'./data/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_train_cls.npy')
+            src_embs = np.load(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_embs.npy')
+            tar_embs = np.load(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_targets.npy')
+            train_cls = np.load(f'./data/{options.dataset}/{encoder_clean}_{lm}_{options.dataset}_{options.fraction}_train_cls.npy')
 
         # tar_embs are already centered and scaled
         src_embs = (src_embs - src_embs.mean(0)) / src_embs.std(0)

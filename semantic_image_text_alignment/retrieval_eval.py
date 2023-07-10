@@ -21,7 +21,7 @@ def create_parser():
     parser.add_argument('--datadir', type=str, help='directory where to load the images from', default='data/mscoco/')
     parser.add_argument('--k', type=int, default=10, help='How many tokens to retrieve')
     parser.add_argument('--mscoco', action='store_true', default=False, help='Load mappings trained using MSCoco dataset')
-    parser.add_argument('--fraction', default=1, type=float, help='MSCoco fraction to use')
+    parser.add_argument('--fraction', default=1., type=float, help='MSCoco fraction to use')
     parser.add_argument('--clip', action='store_true', default=False, help='Evaluate in clip space')
     parser.add_argument('--lm', type=str, default='decapoda-research/llama-7b-hf', help='language model to align to')
     return parser.parse_args()

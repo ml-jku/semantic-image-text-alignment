@@ -24,7 +24,7 @@ def create_parser():
     parser.add_argument('--l', type=int, default=5, help='How many captions to sample')
     parser.add_argument('--mscoco', action='store_true', default=False, help='Load mappings trained using MSCoco dataset')
     parser.add_argument('--flickr', action='store_true', default=False, help='Load mappings trained using Flickr30k dataset')
-    parser.add_argument('--fraction', default=1, type=float, help='MSCoco fraction to use')
+    parser.add_argument('--fraction', default=1., type=float, help='MSCoco fraction to use')
     parser.add_argument('--lm', type=str, default='decapoda-research/llama-7b-hf', help='language model to align to')
     parser.add_argument('--vis-encoder', type=str, default='ViT-B/16',
                         choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14',
