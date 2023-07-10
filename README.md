@@ -72,8 +72,8 @@ Also, apply for access to the [Flickr30k dataset](https://shannon.cs.illinois.ed
 Parse both datasets by
 
     cd data_prep
-    python parse_coco.py
-    python parse_flickr30k.py
+    python semantic_image_text_alignment/data_prep/parse_coco.py
+    python semantic_image_text_alignment/data_prep/parse_flickr30k.py
 
 For computing the different mappings, first, you will need to extract the CLIP and language embeddings for Llama (or other language models) 
 
@@ -83,7 +83,7 @@ You can extract embeddings for the other language models by using the ```--lm```
 This will run for a while and extract token embeddings for all CLIP backbones and save them to ```data/```.
 Next you can train the mappings via *lexical matching* by running
 
-    python semantic_image_text_alignment/data_prep/train_lexical_matching.py
+    python semantic_image_text_alignment/train_lexical_matching.py
     
 Before running the computation for the *external datasets* method, you will need to run
 
@@ -92,7 +92,7 @@ Before running the computation for the *external datasets* method, you will need
 This will download and install the english spacy pipeline used for stop-word removal.
 Then execute
 
-    python semantic_image_text_alignment/data_prep/train_external_dataset.py
+    python semantic_image_text_alignment/train_external_dataset.py
     
 By default the above mappings will be computed for Llama, but you can specify other language models via the ```--lm``` command line argument.
 Further you can specify the fraction of the MS-COCO dataset to be used for the computation of the mapping using the ```--fraction``` command line argument.
@@ -101,11 +101,11 @@ If you want to create mappings for other language models, simply look up the res
 
 To run our retrieval experiments on mscoco, simply run 
 
-    python semantic_image_text_alignment/data_prep/retrieval_eval.py --mscoco
+    python semantic_image_text_alignment/retrieval_eval.py --mscoco
 
 Finally, you can generate captions for the MS-COCO datasets on the respective test splits via
 
-    python semantic_image_text_alignment/data_prep/generate_captions.py --k 8 --l 40 --mscoco --vis-encoder RN50x64 --train-method linear_reg --decoding greedy    
+    python semantic_image_text_alignment/generate_captions.py --k 8 --l 40 --mscoco --vis-encoder RN50x64 --train-method linear_reg --decoding greedy    
 
 For generating captions for the Flickr30k datasets, simply set ```--datadir data/flickr30/imgs_test.pkl``` and ```--flickr```.
 The hyperparameters ```k``` and ```l``` denote the number of tokens provided in the prompt, and the number of random permutations, respectively.
